@@ -60,3 +60,5 @@ dkms.conf
 /initial-conditions-no-plot.txt
 /initial-conditions-with-plot.txt
 .idea
+*.pvd
+*.vtp
