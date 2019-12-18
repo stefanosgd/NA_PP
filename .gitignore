@@ -50,3 +50,13 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+/assignment
+/Assignment2019.pdf
+/backup
+/backup.c
+/create-initial-conditions.py
+/initial-conditions.txt
+/initial-conditions-no-plot.txt
+/initial-conditions-with-plot.txt
+.idea
