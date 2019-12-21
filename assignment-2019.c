@@ -192,6 +192,10 @@ void printParaviewSnapshot() {
  * This is the only operation you are allowed to change in the assignment.
  */
 void updateBody() {
+    if (NumberOfBodies == 1){
+        std::cerr << "Position: " << x[0][0] << " " << x[0][1] << " " << x[0][2] << std::endl;
+        exit(0);
+    }
     maxV = 0.0;
     minDx = std::numeric_limits<double>::max();
 
@@ -211,6 +215,9 @@ void updateBody() {
         force2[i] = 0.0;
     }
 
+//    std::cerr << "Number of Bodies: " << NumberOfBodies << std::endl;
+//    std::cerr << "Mass of Bodies: " << mass << std::endl;
+
     for (int i = 0; i < NumberOfBodies; i++) {
         for (int j = i + 1; j < NumberOfBodies; j++) {
             const double distance = sqrt(
@@ -219,18 +226,47 @@ void updateBody() {
                     (x[i][2] - x[j][2]) * (x[i][2] - x[j][2])
             );
 
-            const double forces = mass[j] * mass[i] / distance / distance / distance;
-            // x,y,z forces acting on particle i from j
-            force0[i] += (x[j][0] - x[i][0]) * forces;
-            force1[i] += (x[j][1] - x[i][1]) * forces;
-            force2[i] += (x[j][2] - x[i][2]) * forces;
+            if (distance <= 0.02) {
+//                std::cerr << "Bodies: " << i << " and " << j << std::endl;
+//
+//                std::cerr << "Mass of Bodies before: " << mass[i] << " " << mass[j] << std::endl;
+//                std::cerr << "Velocity of Bodies before: " << *v[i] << " " << *v[j] << std::endl;
 
-            // x,y,z forces from particle i on j are inverse of j on i
-            force0[j] -= force0[i];
-            force1[j] -= force1[i];
-            force2[j] -= force2[i];
+                v[i][0] = (v[i][0]*mass[i]/(mass[i]+mass[j])) + (v[j][0]*mass[j]/(mass[i]+mass[j]));
+                v[i][1] = (v[i][1]*mass[i]/(mass[i]+mass[j])) + (v[j][1]*mass[j]/(mass[i]+mass[j]));
+                v[i][2] = (v[i][2]*mass[i]/(mass[i]+mass[j])) + (v[j][2]*mass[j]/(mass[i]+mass[j]));
+                mass[i] = mass[i] + mass[j];
+                force0[i] += 0;
+                force1[i] += 0;
+                force2[i] += 0;
 
-            minDx = std::min(minDx, distance);
+//                std::cerr << "Mass of Bodies after: " << mass[i] << std::endl;
+//                std::cerr << "Velocity of Bodies after: " << *v[i] << std::endl;
+
+                for (int k=j; k<NumberOfBodies-1; k++) {
+                    x[k] = x[k+1];
+                    v[k] = v[k+1];
+                    mass[k] = mass[k+1];
+                    force0[k] = force0[k+1];
+                    force1[k] = force1[k+1];
+                    force2[k] = force2[k+1];
+                }
+                NumberOfBodies -= 1;
+            } else {
+                double forces = mass[j] * mass[i] / distance / distance / distance;
+
+                // x,y,z forces acting on particle i from j
+                force0[i] += (x[j][0] - x[i][0]) * forces;
+                force1[i] += (x[j][1] - x[i][1]) * forces;
+                force2[i] += (x[j][2] - x[i][2]) * forces;
+
+                // x,y,z forces from particle i on j are inverse of j on i
+                force0[j] -= force0[i];
+                force1[j] -= force1[i];
+                force2[j] -= force2[i];
+
+                minDx = std::min(minDx, distance);
+            }
         }
 
         x[i][0] = x[i][0] + timeStepSize * v[i][0];
