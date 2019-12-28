@@ -224,7 +224,7 @@ void updateBody() {
             double squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
             double distance = sqrt(squareDistance);
 
-            if (squareDistance <= (0.01 * 0.01)) {
+            while ((squareDistance <= (0.01 * 0.01)) && (NumberOfBodies > 1)) {
                 const double NewMass = mass[i] + mass[j];
 
                 v[i][0] = (v[i][0] * mass[i] / NewMass) + (v[j][0] * mass[j] / NewMass);
@@ -248,7 +248,7 @@ void updateBody() {
                 NumberOfBodies -= 1;
             }
 
-            if (NumberOfBodies != 1) {
+            if ((NumberOfBodies != 1) && (j != NumberOfBodies)) {
                 const double forces = mass[j] * mass[i] / distance / distance / distance;
 
                 // x,y,z forces acting on particle i from j
@@ -260,8 +260,9 @@ void updateBody() {
                 force0[j] -= force0[i];
                 force1[j] -= force1[i];
                 force2[j] -= force2[i];
+
+                minDx = std::min(minDx, distance);
             }
-            minDx = std::min(minDx, distance);
         }
 
         x[i][0] = x[i][0] + timeStepSize * v[i][0];
