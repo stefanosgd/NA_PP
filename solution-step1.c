@@ -213,17 +213,14 @@ void updateBody() {
 
     for (int i = 0; i < NumberOfBodies; i++) {
         for (int j = i + 1; j < NumberOfBodies; j++) {
-            const double distance = sqrt(
-                    (x[i][0] - x[j][0]) * (x[i][0] - x[j][0]) +
-                    (x[i][1] - x[j][1]) * (x[i][1] - x[j][1]) +
-                    (x[i][2] - x[j][2]) * (x[i][2] - x[j][2])
-            );
+            const double dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
+            const double distance = sqrt(dist0*dist0 + dist1*dist1 + dist2*dist2);
 
             const double forces = mass[j] * mass[i] / distance / distance / distance;
             // x,y,z forces acting on particle i from j
-            force0[i] += (x[j][0] - x[i][0]) * forces;
-            force1[i] += (x[j][1] - x[i][1]) * forces;
-            force2[i] += (x[j][2] - x[i][2]) * forces;
+            force0[i] += dist0 * forces;
+            force1[i] += dist1 * forces;
+            force2[i] += dist2 * forces;
 
             // x,y,z forces from particle i on j are inverse of j on i
             force0[j] -= force0[i];
