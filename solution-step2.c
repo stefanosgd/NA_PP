@@ -224,7 +224,7 @@ void updateBody() {
         for (int j = i + 1; j < NumberOfBodies; j++) {
             double dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
             double squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
-            double distance = sqrt(squareDistance);
+            double distance = std::sqrt(squareDistance);
 
             while ((squareDistance <= (0.01 * 0.01)) && (NumberOfBodies > 1)) {
                 const double NewMass = mass[i] + mass[j];
@@ -244,7 +244,7 @@ void updateBody() {
 
                     dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
                     squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
-                    distance = sqrt(squareDistance);
+                    distance = std::sqrt(squareDistance);
                 }
 
                 NumberOfBodies -= 1;
@@ -275,7 +275,7 @@ void updateBody() {
         v[i][1] = v[i][1] + timeStepSize * force1[i] / mass[i];
         v[i][2] = v[i][2] + timeStepSize * force2[i] / mass[i];
 
-        maxV = std::max(maxV,sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]));
+        maxV = std::max(maxV, std::sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]));
     }
     t += timeStepSize;
 
