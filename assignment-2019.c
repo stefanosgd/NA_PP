@@ -220,6 +220,7 @@ void updateBody() {
 
 
     if (t == 0) {
+        #pragma omp parallel for reduction(max:maxV)
         for (int particle = 0; particle < NumberOfBodies; particle++) {
             maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] +
                                             v[particle][2] * v[particle][2]));
@@ -229,20 +230,17 @@ void updateBody() {
     // The velocity difference between each bucket
     double vBucket = maxV / totalBuckets;
 
+#pragma omp parallel for reduction(+:bucketLocation[0:totalBuckets])
     for (int i = 0; i < NumberOfBodies; i++) {
         // Get the velocity of each particle and sort it into the correct bucket
         double velocity = std::sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
-        if (velocity == maxV) {
-            buckets[totalBuckets - 1][bucketLocation[totalBuckets - 1]] = i;
-            bucketLocation[totalBuckets - 1] += 1;
+        int bucketChosen = std::floor(velocity / vBucket);
+        if (bucketChosen == totalBuckets)
+            buckets[bucketChosen-1][bucketLocation[bucketChosen-1]] = i;
+            bucketLocation[bucketChosen-1] += 1;
         } else {
-            for (int j = 0; j < totalBuckets; j++) {
-                if (velocity < vBucket * (j + 1)) {
-                    buckets[j][bucketLocation[j]] = i;
-                    bucketLocation[j] += 1;
-                    break;
-                }
-            }
+            buckets[bucketChosen][bucketLocation[bucketChosen]] = i;
+            bucketLocation[bucketChosen] += 1;
         }
     }
 

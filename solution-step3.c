@@ -235,13 +235,9 @@ void updateBody() {
             buckets[totalBuckets - 1][bucketLocation[totalBuckets - 1]] = i;
             bucketLocation[totalBuckets - 1] += 1;
         } else {
-            for (int j = 0; j < totalBuckets; j++) {
-                if (velocity < vBucket * (j + 1)) {
-                    buckets[j][bucketLocation[j]] = i;
-                    bucketLocation[j] += 1;
-                    break;
-                }
-            }
+            int bucketChosen = std::floor(velocity / vBucket);
+            buckets[bucketChosen][bucketLocation[bucketChosen]] = i;
+            bucketLocation[bucketChosen] += 1;
         }
     }
 
