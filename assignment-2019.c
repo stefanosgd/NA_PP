@@ -193,6 +193,60 @@ void printParaviewSnapshot() {
  * This is the only operation you are allowed to change in the assignment.
  */
 void updateBody() {
+    if (NumberOfBodies == 1) {
+        std::cout << "Position: " << x[0][0] << " " << x[0][1] << " " << x[0][2] << std::endl;
+        tPlot = tFinal;
+        tFinal = t;
+        if (tPlotDelta != 0) {
+            // Plot the final timestep if plotting is active
+            t += tPlot;
+        }
+        t += timeStepSize;
+        return;
+    }
+
+    // 10 total buckets
+    int totalBuckets = 10;
+    // Pointer that points to each bucket
+    int **buckets = new
+    int*[totalBuckets];
+    // Each bucket can hold up to NumberOfBodies values in it
+    for (int i = 0; i < totalBuckets; i++) {
+        buckets[i] = new
+        int[NumberOfBodies];
+    }
+    int *bucketLocation = new
+    int[totalBuckets]();
+
+
+    if (t == 0) {
+        for (int particle = 0; particle < NumberOfBodies; particle++) {
+            maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] +
+                                            v[particle][2] * v[particle][2]));
+        }
+    }
+
+    // The velocity difference between each bucket
+    double vBucket = maxV / totalBuckets;
+
+    for (int i = 0; i < NumberOfBodies; i++) {
+        // Get the velocity of each particle and sort it into the correct bucket
+        double velocity = std::sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
+        if (velocity == maxV) {
+            buckets[totalBuckets - 1][bucketLocation[totalBuckets - 1]] = i;
+            bucketLocation[totalBuckets - 1] += 1;
+        } else {
+            for (int j = 0; j < totalBuckets; j++) {
+                if (velocity < vBucket * (j + 1)) {
+                    buckets[j][bucketLocation[j]] = i;
+                    bucketLocation[j] += 1;
+                    break;
+                }
+            }
+        }
+    }
+
+
     maxV = 0.0;
     minDx = std::numeric_limits<double>::max();
 
@@ -206,66 +260,95 @@ void updateBody() {
     double *force2 = new
     double[NumberOfBodies]();
 
-    long pairs = NumberOfBodies * (NumberOfBodies - 1) / 2;
+    for (int bucket = 0; bucket < totalBuckets; bucket++) {
+        int totalSteps = std::pow(2, bucket);
+        double newTimeStepSize = timeStepSize / totalSteps;
+        for (int step = 0; step < totalSteps; step++) {
+            for (int i = 0; i < bucketLocation[bucket]; i++) {
+                int particle = buckets[bucket][i];
+                force0[particle] = 0.0;
+                force1[particle] = 0.0;
+                force2[particle] = 0.0;
+                for (int j = 0; j < NumberOfBodies; j++) {
+                    if (particle != j) {
+                        double dist0 = x[j][0] - x[particle][0], dist1 = x[j][1] - x[particle][1], dist2 =
+                                x[j][2] - x[particle][2];
+                        double squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
+                        double distance = std::sqrt(squareDistance);
 
-    #pragma omp parallel for reduction(min:minDx) reduction(+:force0[0:NumberOfBodies], force1[0:NumberOfBodies], force2[0:NumberOfBodies])
-    for (int k = 0; k < pairs; k++) {
-        int i = k / NumberOfBodies;
-        int j = k % NumberOfBodies;
-        if (j <= i) {
-            i = NumberOfBodies - i - 2;
-            j = NumberOfBodies - j - 1;
-        }
-//        std::cout << "i: " << i << ", j: " << j  << " on thread 0" << std::endl;//omp_get_thread_num() << std::endl;
+                        while ((squareDistance <= (0.01 * 0.01)) && (NumberOfBodies > 1)) {
 
-        const double dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
-        const double distance = std::sqrt(dist0 * dist0 + dist1 * dist1 + dist2 * dist2);
+                            const double NewMass = mass[particle] + mass[j];
 
-        const double forces = mass[j] * mass[i] / distance / distance / distance;
-        const double f0 = dist0 * forces;
-        const double f1 = dist1 * forces;
-        const double f2 = dist2 * forces;
-        // x,y,z forces acting on particle i from j
-        force0[i] += f0;
-        force1[i] += f1;
-        force2[i] += f2;
+                            v[particle][0] =
+                                    (v[particle][0] * mass[particle] / NewMass) + (v[j][0] * mass[j] / NewMass);
+                            v[particle][1] =
+                                    (v[particle][1] * mass[particle] / NewMass) + (v[j][1] * mass[j] / NewMass);
+                            v[particle][2] =
+                                    (v[particle][2] * mass[particle] / NewMass) + (v[j][2] * mass[j] / NewMass);
+                            mass[particle] = NewMass;
 
-        // x,y,z forces from particle i on j are inverse of j on i
-        force0[j] -= f0;
-        force1[j] -= f1;
-        force2[j] -= f2;
+                            if (j != NumberOfBodies - 1) {
+                                x[j] = x[NumberOfBodies - 1];
+                                v[j] = v[NumberOfBodies - 1];
+                                mass[j] = mass[NumberOfBodies - 1];
 
-//        minDx = std::min(minDx, distance);
-        if (distance < minDx) {
-            minDx = distance;
-        }
-    }
+                                dist0 = x[j][0] - x[particle][0], dist1 = x[j][1] - x[particle][1], dist2 =
+                                        x[j][2] - x[particle][2];
+                                squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
+                                distance = std::sqrt(squareDistance);
+                            }
+                            for (int k = 0; k < totalBuckets; k++) {
+                                for (int kLoc = 0; kLoc < bucketLocation[k]; kLoc++) {
+                                    if (buckets[k][kLoc] == j) {
+                                        buckets[k][kLoc] = buckets[k][bucketLocation[k]];
+                                        bucketLocation[k]--;
+                                    }
+                                }
+                            }
+                            NumberOfBodies -= 1;
+                        }
 
-    #pragma omp parallel for reduction(max:maxV)
-    for (int i = 0; i < NumberOfBodies; i++) {
-        x[i][0] = x[i][0] + timeStepSize * v[i][0];
-        x[i][1] = x[i][1] + timeStepSize * v[i][1];
-        x[i][2] = x[i][2] + timeStepSize * v[i][2];
+                        if ((NumberOfBodies != 1) && (j != NumberOfBodies)) {
+                            const double forces = mass[j] * mass[particle] / distance / distance / distance;
 
-        v[i][0] = v[i][0] + timeStepSize * force0[i] / mass[i];
-        v[i][1] = v[i][1] + timeStepSize * force1[i] / mass[i];
-        v[i][2] = v[i][2] + timeStepSize * force2[i] / mass[i];
+                            // x,y,z forces acting on particle i from j
+                            force0[particle] += dist0 * forces;
+                            force1[particle] += dist1 * forces;
+                            force2[particle] += dist2 * forces;
 
-//        maxV = std::max(maxV, sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]));
-        double velocity = sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
-        if (velocity > maxV) {
-            maxV = velocity;
+                            minDx = std::min(minDx, distance);
+                        }
+                    }
+                }
+                x[particle][0] = x[particle][0] + newTimeStepSize * v[particle][0];
+                x[particle][1] = x[particle][1] + newTimeStepSize * v[particle][1];
+                x[particle][2] = x[particle][2] + newTimeStepSize * v[particle][2];
+
+                v[particle][0] = v[particle][0] + newTimeStepSize * force0[particle] / mass[particle];
+                v[particle][1] = v[particle][1] + newTimeStepSize * force1[particle] / mass[particle];
+                v[particle][2] = v[particle][2] + newTimeStepSize * force2[particle] / mass[particle];
+
+                maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] +
+                                                v[particle][2] * v[particle][2]));
+            }
         }
     }
 
     t += timeStepSize;
 
+
+    delete[]
+    buckets;
     delete[]
     force0;
     delete[]
     force1;
     delete[]
     force2;
+    delete[]
+    bucketLocation;
+
 }
 
 
@@ -275,9 +358,6 @@ void updateBody() {
  * Not to be changed in assignment.
  */
 int main(int argc, char **argv) {
-    //todo delete this
-    double begin = omp_get_wtime();
-
     if (argc == 1) {
         std::cerr << "usage: " + std::string(argv[0]) + " snapshot final-time dt objects" << std::endl
                   << "  snapshot        interval after how many time units to plot. Use 0 to switch off plotting"
@@ -336,12 +416,6 @@ int main(int argc, char **argv) {
             tPlot += tPlotDelta;
         }
     }
-//todo delete this
-    for (int i = 0; i < 5; i++) {
-        std::cout << "Position of body " << i << ": " << x[i][0] << " " << x[i][1] << " " << x[i][2] << std::endl;
-    }
-    double end = omp_get_wtime();
-    std::cout << "This took " << end - begin << std::endl;
 
     closeParaviewVideoFile();
 
