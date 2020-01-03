@@ -308,7 +308,6 @@ void updateBody() {
                             NumberOfBodies -= 1;
                         }
 
-
                         if ((NumberOfBodies != 1) && (j != NumberOfBodies)) {
                             const double forces = mass[j] * mass[particle] / distance / distance / distance;
 
