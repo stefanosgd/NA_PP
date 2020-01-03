@@ -192,9 +192,8 @@ void printParaviewSnapshot() {
  * This is the only operation you are allowed to change in the assignment.
  */
 void updateBody() {
-
     if (NumberOfBodies == 1) {
-        std::cerr << "Position: " << x[0][0] << " " << x[0][1] << " " << x[0][2] << std::endl;
+        std::cout << "Position: " << x[0][0] << " " << x[0][1] << " " << x[0][2] << std::endl;
         tPlot = tFinal;
         tFinal = t;
         if (tPlotDelta != 0) {
@@ -220,6 +219,12 @@ void updateBody() {
 
     // The velocity difference between each bucket
     double vBucket = maxV / totalBuckets;
+
+    if (t == 0){
+        for (int particle = 0; particle < NumberOfBodies; particle++){
+            maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] + v[particle][2] * v[particle][2]));
+        }
+    }
 
     for (int i = 0; i < NumberOfBodies; i++) {
         // Get the velocity of each particle and sort it into the correct bucket

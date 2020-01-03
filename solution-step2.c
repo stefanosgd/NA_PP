@@ -194,7 +194,7 @@ void printParaviewSnapshot() {
 void updateBody() {
 
     if (NumberOfBodies == 1) {
-        std::cerr << "Position: " << x[0][0] << " " << x[0][1] << " " << x[0][2] << std::endl;
+        std::cout << "Position: " << x[0][0] << " " << x[0][1] << " " << x[0][2] << std::endl;
         tPlot = tFinal;
         tFinal = t;
         if (tPlotDelta != 0) {
