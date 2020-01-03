@@ -217,14 +217,16 @@ void updateBody() {
     int *bucketLocation = new
     int[totalBuckets]();
 
-    // The velocity difference between each bucket
-    double vBucket = maxV / totalBuckets;
 
-    if (t == 0){
-        for (int particle = 0; particle < NumberOfBodies; particle++){
-            maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] + v[particle][2] * v[particle][2]));
+    if (t == 0) {
+        for (int particle = 0; particle < NumberOfBodies; particle++) {
+            maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] +
+                                            v[particle][2] * v[particle][2]));
         }
     }
+
+    // The velocity difference between each bucket
+    double vBucket = maxV / totalBuckets;
 
     for (int i = 0; i < NumberOfBodies; i++) {
         // Get the velocity of each particle and sort it into the correct bucket
@@ -250,9 +252,12 @@ void updateBody() {
     // force0 = force along x direction
     // force1 = force along y direction
     // force2 = force along z direction
-    double *force0 = new double[NumberOfBodies]();
-    double *force1 = new double[NumberOfBodies]();
-    double *force2 = new double[NumberOfBodies]();
+    double *force0 = new
+    double[NumberOfBodies]();
+    double *force1 = new
+    double[NumberOfBodies]();
+    double *force2 = new
+    double[NumberOfBodies]();
 
     for (int bucket = 0; bucket < totalBuckets; bucket++) {
         int totalSteps = std::pow(2, bucket);
@@ -260,70 +265,72 @@ void updateBody() {
         for (int step = 0; step < totalSteps; step++) {
             for (int i = 0; i < bucketLocation[bucket]; i++) {
                 int particle = buckets[bucket][i];
-                if (particle != -1) {
-                    force0[particle] = 0.0;
-                    force1[particle] = 0.0;
-                    force2[particle] = 0.0;
-                    for (int j = 0; j < NumberOfBodies; j++) {
-                        if (particle != j) {
-                            double dist0 = x[j][0] - x[particle][0], dist1 = x[j][1] - x[particle][1], dist2 = x[j][2] - x[particle][2];
-                            double squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
-                            double distance = std::sqrt(squareDistance);
+                force0[particle] = 0.0;
+                force1[particle] = 0.0;
+                force2[particle] = 0.0;
+                for (int j = 0; j < NumberOfBodies; j++) {
+                    if (particle != j) {
+                        double dist0 = x[j][0] - x[particle][0], dist1 = x[j][1] - x[particle][1], dist2 =
+                                x[j][2] - x[particle][2];
+                        double squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
+                        double distance = std::sqrt(squareDistance);
 
-                            while ((squareDistance <= (0.01 * 0.01)) && (NumberOfBodies > 1)) {
+                        while ((squareDistance <= (0.01 * 0.01)) && (NumberOfBodies > 1)) {
 
-                                const double NewMass = mass[particle] + mass[j];
+                            const double NewMass = mass[particle] + mass[j];
 
-                                v[particle][0] = (v[particle][0] * mass[particle] / NewMass) + (v[j][0] * mass[j] / NewMass);
-                                v[particle][1] = (v[particle][1] * mass[particle] / NewMass) + (v[j][1] * mass[j] / NewMass);
-                                v[particle][2] = (v[particle][2] * mass[particle] / NewMass) + (v[j][2] * mass[j] / NewMass);
-                                mass[particle] = NewMass;
+                            v[particle][0] =
+                                    (v[particle][0] * mass[particle] / NewMass) + (v[j][0] * mass[j] / NewMass);
+                            v[particle][1] =
+                                    (v[particle][1] * mass[particle] / NewMass) + (v[j][1] * mass[j] / NewMass);
+                            v[particle][2] =
+                                    (v[particle][2] * mass[particle] / NewMass) + (v[j][2] * mass[j] / NewMass);
+                            mass[particle] = NewMass;
 
-                                if (j != NumberOfBodies - 1) {
-                                    x[j] = x[NumberOfBodies - 1];
-                                    v[j] = v[NumberOfBodies - 1];
-                                    mass[j] = mass[NumberOfBodies - 1];
+                            if (j != NumberOfBodies - 1) {
+                                x[j] = x[NumberOfBodies - 1];
+                                v[j] = v[NumberOfBodies - 1];
+                                mass[j] = mass[NumberOfBodies - 1];
 
-                                    dist0 = x[j][0] - x[particle][0], dist1 = x[j][1] - x[particle][1], dist2 = x[j][2] - x[particle][2];
-                                    squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
-                                    distance = std::sqrt(squareDistance);
-                                }
-                                for (int k = 0; k < totalBuckets; k++) {
-                                    for (int kLoc = 0; kLoc < bucketLocation[k]; kLoc++) {
-                                        if (buckets[k][kLoc] = i) {
-                                            buckets[k][kLoc] = -1;
-                                        } else if (buckets[k][kLoc] = NumberOfBodies - 1) {
-                                            buckets[k][kLoc] = i;
-                                        }
+                                dist0 = x[j][0] - x[particle][0], dist1 = x[j][1] - x[particle][1], dist2 =
+                                        x[j][2] - x[particle][2];
+                                squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
+                                distance = std::sqrt(squareDistance);
+                            }
+                            for (int k = 0; k < totalBuckets; k++) {
+                                for (int kLoc = 0; kLoc < bucketLocation[k]; kLoc++) {
+                                    if (buckets[k][kLoc] == j) {
+                                        buckets[k][kLoc] = buckets[k][bucketLocation[k]];
+                                        bucketLocation[k]--;
                                     }
                                 }
-                                NumberOfBodies -= 1;
                             }
+                            NumberOfBodies -= 1;
+                        }
 
 
-                            if ((NumberOfBodies != 1) && (j != NumberOfBodies)) {
-                                const double forces = mass[j] * mass[particle] / distance / distance / distance;
+                        if ((NumberOfBodies != 1) && (j != NumberOfBodies)) {
+                            const double forces = mass[j] * mass[particle] / distance / distance / distance;
 
-                                // x,y,z forces acting on particle i from j
-                                force0[particle] += dist0 * forces;
-                                force1[particle] += dist1 * forces;
-                                force2[particle] += dist2 * forces;
+                            // x,y,z forces acting on particle i from j
+                            force0[particle] += dist0 * forces;
+                            force1[particle] += dist1 * forces;
+                            force2[particle] += dist2 * forces;
 
-                                minDx = std::min(minDx, distance);
-                            }
+                            minDx = std::min(minDx, distance);
                         }
                     }
-
-                    x[particle][0] = x[particle][0] + newTimeStepSize * v[particle][0];
-                    x[particle][1] = x[particle][1] + newTimeStepSize * v[particle][1];
-                    x[particle][2] = x[particle][2] + newTimeStepSize * v[particle][2];
-
-                    v[particle][0] = v[particle][0] + newTimeStepSize * force0[particle] / mass[particle];
-                    v[particle][1] = v[particle][1] + newTimeStepSize * force1[particle] / mass[particle];
-                    v[particle][2] = v[particle][2] + newTimeStepSize * force2[particle] / mass[particle];
-
-                    maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] + v[particle][2] * v[particle][2]));
                 }
+                x[particle][0] = x[particle][0] + newTimeStepSize * v[particle][0];
+                x[particle][1] = x[particle][1] + newTimeStepSize * v[particle][1];
+                x[particle][2] = x[particle][2] + newTimeStepSize * v[particle][2];
+
+                v[particle][0] = v[particle][0] + newTimeStepSize * force0[particle] / mass[particle];
+                v[particle][1] = v[particle][1] + newTimeStepSize * force1[particle] / mass[particle];
+                v[particle][2] = v[particle][2] + newTimeStepSize * force2[particle] / mass[particle];
+
+                maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] +
+                                                v[particle][2] * v[particle][2]));
             }
         }
     }
@@ -331,11 +338,16 @@ void updateBody() {
     t += timeStepSize;
 
 
-    delete[] buckets;
-    delete[] force0;
-    delete[] force1;
-    delete[] force2;
-    delete[] bucketLocation;
+    delete[]
+    buckets;
+    delete[]
+    force0;
+    delete[]
+    force1;
+    delete[]
+    force2;
+    delete[]
+    bucketLocation;
 
 }
 

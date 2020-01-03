@@ -249,16 +249,18 @@ void updateBody() {
 
             if ((NumberOfBodies != 1) && (j != NumberOfBodies)) {
                 const double forces = mass[j] * mass[i] / distance / distance / distance;
-
+                const double f0 = dist0 * forces;
+                const double f1 = dist1 * forces;
+                const double f2 = dist2 * forces;
                 // x,y,z forces acting on particle i from j
-                force0[i] += dist0 * forces;
-                force1[i] += dist1 * forces;
-                force2[i] += dist2 * forces;
+                force0[i] += f0;
+                force1[i] += f1;
+                force2[i] += f2;
 
                 // x,y,z forces from particle i on j are inverse of j on i
-                force0[j] -= force0[i];
-                force1[j] -= force1[i];
-                force2[j] -= force2[i];
+                force0[j] -= f0;
+                force1[j] -= f1;
+                force2[j] -= f2;
 
                 minDx = std::min(minDx, distance);
             }
