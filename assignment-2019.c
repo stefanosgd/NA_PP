@@ -205,6 +205,40 @@ void updateBody() {
     double[NumberOfBodies]();
     double *force2 = new
     double[NumberOfBodies]();
+//
+//    for (int i = 0; i < NumberOfBodies; i++) {
+//        #pragma omp parallel for reduction(min:minDx) reduction(+:force0[0:NumberOfBodies], force1[0:NumberOfBodies], force2[0:NumberOfBodies])
+//        for (int j = i + 1; j < NumberOfBodies; j++) {
+//            const double dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
+//            const double distance = std::sqrt(dist0*dist0 + dist1*dist1 + dist2*dist2);
+//
+//            const double forces = mass[j] * mass[i] / distance / distance / distance;
+//            const double f0 = dist0 * forces;
+//            const double f1 = dist1 * forces;
+//            const double f2 = dist2 * forces;
+//            // x,y,z forces acting on particle i from j
+//            force0[i] += f0;
+//            force1[i] += f1;
+//            force2[i] += f2;
+//
+//            // x,y,z forces from particle i on j are inverse of j on i
+//            force0[j] -= f0;
+//            force1[j] -= f1;
+//            force2[j] -= f2;
+//
+//            minDx = std::min(minDx, distance);
+//        }
+//
+//        x[i][0] = x[i][0] + timeStepSize * v[i][0];
+//        x[i][1] = x[i][1] + timeStepSize * v[i][1];
+//        x[i][2] = x[i][2] + timeStepSize * v[i][2];
+//
+//        v[i][0] = v[i][0] + timeStepSize * force0[i] / mass[i];
+//        v[i][1] = v[i][1] + timeStepSize * force1[i] / mass[i];
+//        v[i][2] = v[i][2] + timeStepSize * force2[i] / mass[i];
+//
+//        maxV = std::max(maxV,sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]));
+//    }
 
     long pairs = NumberOfBodies * (NumberOfBodies - 1) / 2;
 
@@ -276,7 +310,7 @@ void updateBody() {
  */
 int main(int argc, char **argv) {
     //todo delete this
-    clock_t begin = clock();
+    double begin = omp_get_wtime();
 
     if (argc == 1) {
         std::cerr << "usage: " + std::string(argv[0]) + " snapshot final-time dt objects" << std::endl
@@ -340,9 +374,8 @@ int main(int argc, char **argv) {
 //    for (int i = 0; i < NumberOfBodies; i++) {
 //        std::cout << "Position of body " << i << ": " << x[i][0] << " " << x[i][1] << " " << x[i][2] << std::endl;
 //    }
-    clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-    std::cout << "This took " << time_spent << std::endl;
+    double end = omp_get_wtime();
+    std::cout << "This took " << end - begin << std::endl;
 
     closeParaviewVideoFile();
 
