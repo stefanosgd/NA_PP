@@ -208,7 +208,7 @@ void updateBody() {
     for (int i = 0; i < NumberOfBodies; i++) {
         for (int j = i + 1; j < NumberOfBodies; j++) {
             const double dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
-            const double distance = sqrt(dist0*dist0 + dist1*dist1 + dist2*dist2);
+            const double distance = std::sqrt(dist0*dist0 + dist1*dist1 + dist2*dist2);
 
             const double forces = mass[j] * mass[i] / distance / distance / distance;
             // x,y,z forces acting on particle i from j
