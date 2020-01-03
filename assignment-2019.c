@@ -195,11 +195,14 @@ void updateBody() {
 
     if (NumberOfBodies == 1) {
         std::cerr << "Position: " << x[0][0] << " " << x[0][1] << " " << x[0][2] << std::endl;
+        tPlot = tFinal;
+        tFinal = t;
         if (tPlotDelta != 0) {
-            printParaviewSnapshot();
-            closeParaviewVideoFile();
+            // Plot the final timestep if plotting is active
+            t += tPlot;
         }
-        exit(0);
+        t += timeStepSize;
+        return;
     }
 
     // 10 total buckets
@@ -218,29 +221,23 @@ void updateBody() {
     // The velocity difference between each bucket
     double vBucket = maxV / totalBuckets;
 
-    if (t == 0) {
-        for (int i = 0; i < NumberOfBodies; i++) {
-            buckets[0][bucketLocation[0]] = i;
-            bucketLocation[0] += 1;
-        }
-    } else {
-        for (int i = 0; i < NumberOfBodies; i++) {
-            // Get the velocity of each particle and sort it into the correct bucket
-            double velocity = std::sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
-            if (velocity == maxV) {
-                buckets[totalBuckets - 1][bucketLocation[totalBuckets - 1]] = i;
-                bucketLocation[totalBuckets - 1] += 1;
-            } else {
-                for (int j = 0; j < totalBuckets; j++) {
-                    if (velocity < vBucket * (j + 1)) {
-                        buckets[j][bucketLocation[j]] = i;
-                        bucketLocation[j] += 1;
-                        break;
-                    }
+    for (int i = 0; i < NumberOfBodies; i++) {
+        // Get the velocity of each particle and sort it into the correct bucket
+        double velocity = std::sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
+        if (velocity == maxV) {
+            buckets[totalBuckets - 1][bucketLocation[totalBuckets - 1]] = i;
+            bucketLocation[totalBuckets - 1] += 1;
+        } else {
+            for (int j = 0; j < totalBuckets; j++) {
+                if (velocity < vBucket * (j + 1)) {
+                    buckets[j][bucketLocation[j]] = i;
+                    bucketLocation[j] += 1;
+                    break;
                 }
             }
         }
     }
+
 
     maxV = 0.0;
     minDx = std::numeric_limits<double>::max();
@@ -248,10 +245,9 @@ void updateBody() {
     // force0 = force along x direction
     // force1 = force along y direction
     // force2 = force along z direction
-    double *force0 = new double[NumberOfBodies];
-    double *force1 = new double[NumberOfBodies];
-    double *force2 = new
-    double[NumberOfBodies];
+    double *force0 = new double[NumberOfBodies]();
+    double *force1 = new double[NumberOfBodies]();
+    double *force2 = new double[NumberOfBodies]();
 
     for (int bucket = 0; bucket < totalBuckets; bucket++) {
         int totalSteps = std::pow(2, bucket);
@@ -296,8 +292,6 @@ void updateBody() {
                                         }
                                     }
                                 }
-
-
                                 NumberOfBodies -= 1;
                             }
 
@@ -327,7 +321,6 @@ void updateBody() {
                 }
             }
         }
-
     }
 
     t += timeStepSize;

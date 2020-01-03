@@ -192,13 +192,17 @@ void printParaviewSnapshot() {
  * This is the only operation you are allowed to change in the assignment.
  */
 void updateBody() {
+
     if (NumberOfBodies == 1) {
         std::cerr << "Position: " << x[0][0] << " " << x[0][1] << " " << x[0][2] << std::endl;
-        if (tPlot != 0) {
-            printParaviewSnapshot();
-            closeParaviewVideoFile();
+        tPlot = tFinal;
+        tFinal = t;
+        if (tPlotDelta != 0) {
+            // Plot the final timestep if plotting is active
+            t += tPlot;
         }
-        exit(0);
+        t += timeStepSize;
+        return;
     }
 
     maxV = 0.0;
@@ -208,23 +212,16 @@ void updateBody() {
     // force1 = force along y direction
     // force2 = force along z direction
     double *force0 = new
-    double[NumberOfBodies];
+    double[NumberOfBodies]();
     double *force1 = new
-    double[NumberOfBodies];
+    double[NumberOfBodies]();
     double *force2 = new
-    double[NumberOfBodies];
-
-    for (int i = 0; i < NumberOfBodies; i++) {
-        force0[i] = 0.0;
-        force1[i] = 0.0;
-        force2[i] = 0.0;
-    }
+    double[NumberOfBodies]();
 
     for (int i = 0; i < NumberOfBodies; i++) {
         for (int j = i + 1; j < NumberOfBodies; j++) {
             double dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
             double squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
-            double distance = std::sqrt(squareDistance);
 
             while ((squareDistance <= (0.01 * 0.01)) && (NumberOfBodies > 1)) {
                 const double NewMass = mass[i] + mass[j];
@@ -244,11 +241,11 @@ void updateBody() {
 
                     dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
                     squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
-                    distance = std::sqrt(squareDistance);
                 }
-
-                NumberOfBodies -= 1;
+                NumberOfBodies--;
             }
+
+            double distance = std::sqrt(squareDistance);
 
             if ((NumberOfBodies != 1) && (j != NumberOfBodies)) {
                 const double forces = mass[j] * mass[i] / distance / distance / distance;
@@ -277,6 +274,7 @@ void updateBody() {
 
         maxV = std::max(maxV, std::sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]));
     }
+
     t += timeStepSize;
 
     delete[]
