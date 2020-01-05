@@ -231,16 +231,19 @@ void updateBody() {
     for (int i = 0; i < NumberOfBodies; i++) {
         // Get the velocity of each particle and sort it into the correct bucket
         double velocity = std::sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
-        if (velocity == maxV) {
-            buckets[totalBuckets - 1][bucketLocation[totalBuckets - 1]] = i;
-            bucketLocation[totalBuckets - 1] += 1;
+        int bucketChosen = std::floor(velocity / vBucket);
+        if (bucketChosen < 0) {
+            bucketChosen = 0;
+        }
+
+        if (bucketChosen == totalBuckets) {
+            buckets[bucketChosen - 1][bucketLocation[bucketChosen - 1]++] = i;
         } else {
-            int bucketChosen = std::floor(velocity / vBucket);
-            buckets[bucketChosen][bucketLocation[bucketChosen]] = i;
-            bucketLocation[bucketChosen] += 1;
+            buckets[bucketChosen][bucketLocation[bucketChosen]++] = i;
         }
     }
-
+//Position: 2.13890631750268 0.898275897722487 0
+//Position: 2.13890656121686 0.898275001486517 0
 
     maxV = 0.0;
     minDx = std::numeric_limits<double>::max();

@@ -207,53 +207,48 @@ void updateBody() {
 
     long pairs = NumberOfBodies * (NumberOfBodies - 1) / 2;
 
-    #pragma omp parallel for reduction(min:minDx) reduction(+:force0[0:NumberOfBodies], force1[0:NumberOfBodies], force2[0:NumberOfBodies])
-    for (int k = 0; k < pairs; k++) {
-        int i = k / NumberOfBodies;
-        int j = k % NumberOfBodies;
-        if (j <= i) {
-            i = NumberOfBodies - i - 2;
-            j = NumberOfBodies - j - 1;
+#pragma omp parallel
+    {
+#pragma omp for reduction(min:minDx) reduction(+:force0[0:NumberOfBodies], force1[0:NumberOfBodies], force2[0:NumberOfBodies])
+        for (int k = 0; k < pairs; k++) {
+            int i = k / NumberOfBodies;
+            int j = k % NumberOfBodies;
+            if (j <= i) {
+                i = NumberOfBodies - i - 2;
+                j = NumberOfBodies - j - 1;
+            }
+
+            const double dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
+            const double distance = std::sqrt(dist0 * dist0 + dist1 * dist1 + dist2 * dist2);
+
+            const double forces = mass[j] * mass[i] / distance / distance / distance;
+            const double f0 = dist0 * forces;
+            const double f1 = dist1 * forces;
+            const double f2 = dist2 * forces;
+            // x,y,z forces acting on particle i from j
+            force0[i] += f0;
+            force1[i] += f1;
+            force2[i] += f2;
+
+            // x,y,z forces from particle i on j are inverse of j on i
+            force0[j] -= f0;
+            force1[j] -= f1;
+            force2[j] -= f2;
+
+            minDx = std::min(minDx, distance);
         }
-//        std::cout << "i: " << i << ", j: " << j  << " on thread 0" << std::endl;//omp_get_thread_num() << std::endl;
 
-        const double dist0 = x[j][0] - x[i][0], dist1 = x[j][1] - x[i][1], dist2 = x[j][2] - x[i][2];
-        const double distance = std::sqrt(dist0 * dist0 + dist1 * dist1 + dist2 * dist2);
+#pragma omp for reduction(max:maxV)
+        for (int i = 0; i < NumberOfBodies; i++) {
+            x[i][0] = x[i][0] + timeStepSize * v[i][0];
+            x[i][1] = x[i][1] + timeStepSize * v[i][1];
+            x[i][2] = x[i][2] + timeStepSize * v[i][2];
 
-        const double forces = mass[j] * mass[i] / distance / distance / distance;
-        const double f0 = dist0 * forces;
-        const double f1 = dist1 * forces;
-        const double f2 = dist2 * forces;
-        // x,y,z forces acting on particle i from j
-        force0[i] += f0;
-        force1[i] += f1;
-        force2[i] += f2;
+            v[i][0] = v[i][0] + timeStepSize * force0[i] / mass[i];
+            v[i][1] = v[i][1] + timeStepSize * force1[i] / mass[i];
+            v[i][2] = v[i][2] + timeStepSize * force2[i] / mass[i];
 
-        // x,y,z forces from particle i on j are inverse of j on i
-        force0[j] -= f0;
-        force1[j] -= f1;
-        force2[j] -= f2;
-
-//        minDx = std::min(minDx, distance);
-        if (distance < minDx) {
-            minDx = distance;
-        }
-    }
-
-    #pragma omp parallel for reduction(max:maxV)
-    for (int i = 0; i < NumberOfBodies; i++) {
-        x[i][0] = x[i][0] + timeStepSize * v[i][0];
-        x[i][1] = x[i][1] + timeStepSize * v[i][1];
-        x[i][2] = x[i][2] + timeStepSize * v[i][2];
-
-        v[i][0] = v[i][0] + timeStepSize * force0[i] / mass[i];
-        v[i][1] = v[i][1] + timeStepSize * force1[i] / mass[i];
-        v[i][2] = v[i][2] + timeStepSize * force2[i] / mass[i];
-
-//        maxV = std::max(maxV, sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]));
-        double velocity = sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
-        if (velocity > maxV) {
-            maxV = velocity;
+            maxV = std::max(maxV, sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]));
         }
     }
 
