@@ -403,9 +403,6 @@ void updateBody() {
     collidedParticles;
 }
 
-// Old Step3 Position: 2.00419158400086 0.994833655104409 0
-// New Step3 Position: 2.00104175486776 0.996304306225511 0
-
 
 /**
  * Main routine.
