@@ -19,9 +19,6 @@
 #include <math.h>
 #include <limits>
 #include <iomanip>
-//todo delete
-#include <omp.h>
-
 
 double t = 0;
 double tFinal = 0;
@@ -208,9 +205,8 @@ void updateBody() {
     double[NumberOfBodies]();
 
     const long pairs = NumberOfBodies * (NumberOfBodies - 1) / 2;
-    omp_set_dynamic(0);     // Explicitly disable dynamic teams
-    omp_set_num_threads(3); // Use 4 threads for all consecutive parallel regions
-#pragma omp parallel default(none) shared(x, v, timeStepSize, mass, NumberOfBodies, force0, force1, force2, maxV, minDx)
+
+#pragma omp parallel shared(x, v, timeStepSize, mass, NumberOfBodies, force0, force1, force2, maxV, minDx)
     {
 #pragma omp for reduction(min:minDx) reduction(+:force0[0:NumberOfBodies], force1[0:NumberOfBodies], force2[0:NumberOfBodies])
         for (int k = 0; k < pairs; k++) {
@@ -251,7 +247,7 @@ void updateBody() {
             v[particle][1] = v[particle][1] + timeStepSize * force1[particle] / mass[particle];
             v[particle][2] = v[particle][2] + timeStepSize * force2[particle] / mass[particle];
 
-            maxV = std::max(maxV, sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] + v[particle][2] * v[particle][2]));
+            maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] + v[particle][2] * v[particle][2]));
         }
     }
 
@@ -272,9 +268,6 @@ void updateBody() {
  * Not to be changed in assignment.
  */
 int main(int argc, char **argv) {
-    //todo delete
-    double start = omp_get_wtime();
-//    clock_t start = clock();
 
     if (argc == 1) {
         std::cerr << "usage: " + std::string(argv[0]) + " snapshot final-time dt objects" << std::endl
@@ -334,13 +327,6 @@ int main(int argc, char **argv) {
             tPlot += tPlotDelta;
         }
     }
-
-    double end = omp_get_wtime();
-    double time_spent = end - start;
-//    clock_t end = clock();
-//    double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-
-    std::cout << "This took " << time_spent << std::endl;
 
     closeParaviewVideoFile();
 
