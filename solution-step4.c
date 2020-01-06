@@ -19,6 +19,8 @@
 #include <math.h>
 #include <limits>
 #include <iomanip>
+//todo delete
+#include <omp.h>
 
 
 double t = 0;
@@ -205,9 +207,10 @@ void updateBody() {
     double *force2 = new
     double[NumberOfBodies]();
 
-    long pairs = NumberOfBodies * (NumberOfBodies - 1) / 2;
-
-#pragma omp parallel
+    const long pairs = NumberOfBodies * (NumberOfBodies - 1) / 2;
+    omp_set_dynamic(0);     // Explicitly disable dynamic teams
+    omp_set_num_threads(3); // Use 4 threads for all consecutive parallel regions
+#pragma omp parallel default(none) shared(x, v, timeStepSize, mass, NumberOfBodies, force0, force1, force2, maxV, minDx)
     {
 #pragma omp for reduction(min:minDx) reduction(+:force0[0:NumberOfBodies], force1[0:NumberOfBodies], force2[0:NumberOfBodies])
         for (int k = 0; k < pairs; k++) {
@@ -239,16 +242,16 @@ void updateBody() {
         }
 
 #pragma omp for reduction(max:maxV)
-        for (int i = 0; i < NumberOfBodies; i++) {
-            x[i][0] = x[i][0] + timeStepSize * v[i][0];
-            x[i][1] = x[i][1] + timeStepSize * v[i][1];
-            x[i][2] = x[i][2] + timeStepSize * v[i][2];
+        for (int particle = 0; particle < NumberOfBodies; particle++) {
+            x[particle][0] = x[particle][0] + timeStepSize * v[particle][0];
+            x[particle][1] = x[particle][1] + timeStepSize * v[particle][1];
+            x[particle][2] = x[particle][2] + timeStepSize * v[particle][2];
 
-            v[i][0] = v[i][0] + timeStepSize * force0[i] / mass[i];
-            v[i][1] = v[i][1] + timeStepSize * force1[i] / mass[i];
-            v[i][2] = v[i][2] + timeStepSize * force2[i] / mass[i];
+            v[particle][0] = v[particle][0] + timeStepSize * force0[particle] / mass[particle];
+            v[particle][1] = v[particle][1] + timeStepSize * force1[particle] / mass[particle];
+            v[particle][2] = v[particle][2] + timeStepSize * force2[particle] / mass[particle];
 
-            maxV = std::max(maxV, sqrt(v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]));
+            maxV = std::max(maxV, sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] + v[particle][2] * v[particle][2]));
         }
     }
 
@@ -269,6 +272,10 @@ void updateBody() {
  * Not to be changed in assignment.
  */
 int main(int argc, char **argv) {
+    //todo delete
+    double start = omp_get_wtime();
+//    clock_t start = clock();
+
     if (argc == 1) {
         std::cerr << "usage: " + std::string(argv[0]) + " snapshot final-time dt objects" << std::endl
                   << "  snapshot        interval after how many time units to plot. Use 0 to switch off plotting"
@@ -327,6 +334,14 @@ int main(int argc, char **argv) {
             tPlot += tPlotDelta;
         }
     }
+
+    double end = omp_get_wtime();
+    double time_spent = end - start;
+//    clock_t end = clock();
+//    double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
+
+    std::cout << "This took " << time_spent << std::endl;
+
     closeParaviewVideoFile();
 
     return 0;

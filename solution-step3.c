@@ -300,11 +300,15 @@ void updateBody() {
                                 dist2 = x[jParticle][2] - x[particle][2];
                         double squareDistance = dist0 * dist0 + dist1 * dist1 + dist2 * dist2;
 
-                        while ((squareDistance <= (0.01 * 0.01)) && (bucketLocation[bucketOfJ] > 0)) {
+                        if (squareDistance <= (0.01 * 0.01)) {
 
                             collidedParticles[collisionPointer] = jParticle;
                             collisionPointer++;
                             const double NewMass = mass[particle] + mass[jParticle];
+
+                            x[particle][0] = x[particle][0] + (dist0/2);
+                            x[particle][1] = x[particle][1] + (dist1/2);
+                            x[particle][2] = x[particle][2] + (dist2/2);
 
                             v[particle][0] = (v[particle][0] * mass[particle] / NewMass) +
                                              (v[jParticle][0] * mass[jParticle] / NewMass);
@@ -356,16 +360,18 @@ void updateBody() {
                         }
                     }
                 }
-                x[particle][0] = x[particle][0] + newTimeStepSize * v[particle][0];
-                x[particle][1] = x[particle][1] + newTimeStepSize * v[particle][1];
-                x[particle][2] = x[particle][2] + newTimeStepSize * v[particle][2];
+                if (NumberOfBodies != 1) {
+                    x[particle][0] = x[particle][0] + newTimeStepSize * v[particle][0];
+                    x[particle][1] = x[particle][1] + newTimeStepSize * v[particle][1];
+                    x[particle][2] = x[particle][2] + newTimeStepSize * v[particle][2];
 
-                v[particle][0] = v[particle][0] + newTimeStepSize * force0New[particle] / mass[particle];
-                v[particle][1] = v[particle][1] + newTimeStepSize * force1New[particle] / mass[particle];
-                v[particle][2] = v[particle][2] + newTimeStepSize * force2New[particle] / mass[particle];
+                    v[particle][0] = v[particle][0] + newTimeStepSize * force0New[particle] / mass[particle];
+                    v[particle][1] = v[particle][1] + newTimeStepSize * force1New[particle] / mass[particle];
+                    v[particle][2] = v[particle][2] + newTimeStepSize * force2New[particle] / mass[particle];
 
-                maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] +
-                                                v[particle][2] * v[particle][2]));
+                    maxV = std::max(maxV, std::sqrt(v[particle][0] * v[particle][0] + v[particle][1] * v[particle][1] +
+                                                    v[particle][2] * v[particle][2]));
+                }
             }
         }
     }
